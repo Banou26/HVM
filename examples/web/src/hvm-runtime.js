@@ -510,7 +510,7 @@ export class HVMRuntime {
 
     this.device = await adapter.requestDevice();
     this.queue = this.device.queue;
-    this.adapterInfo = await adapter.requestAdapterInfo();
+    this.adapterInfo = adapter.info;
     this.initialized = true;
 
     return this;
