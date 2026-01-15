@@ -181,10 +181,10 @@ fn node_take(loc: u32) -> vec2<u32> {
   let snd = atomicExchange(&node_buf[get_snd_idx(loc)], 0u);
   return vec2<u32>(fst, snd);
 }
-fn vars_load(var_idx: u32) -> u32 { return atomicLoad(&vars_buf[var_idx]); }
-fn vars_store(var_idx: u32, val: u32) { atomicStore(&vars_buf[var_idx], val); }
-fn vars_exchange(var_idx: u32, val: u32) -> u32 { return atomicExchange(&vars_buf[var_idx], val); }
-fn vars_take(var_idx: u32) -> u32 { return atomicExchange(&vars_buf[var_idx], 0u); }
+fn vars_load(var_idx: u32) -> u32 { return atomicLoad(&vars_buf[var_idx % config.vars_len]); }
+fn vars_store(var_idx: u32, val: u32) { atomicStore(&vars_buf[var_idx % config.vars_len], val); }
+fn vars_exchange(var_idx: u32, val: u32) -> u32 { return atomicExchange(&vars_buf[var_idx % config.vars_len], val); }
+fn vars_take(var_idx: u32) -> u32 { return atomicExchange(&vars_buf[var_idx % config.vars_len], 0u); }
 fn is_node_free(loc: u32) -> bool { return node_load_fst(loc) == 0u && node_load_snd(loc) == 0u; }
 fn is_vars_free(var_idx: u32) -> bool { return vars_load(var_idx) == 0u; }
 
@@ -704,12 +704,13 @@ export class HVMRuntime {
 
     const elapsed = (performance.now() - startTime) / 1000;
 
-    // Read result from root variable
+    // Read result from root variable (ROOT index with modular arithmetic)
     {
       const encoder = this.device.createCommandEncoder();
       const rootIdx = 0x1FFFFFFF;
-      // For simplicity, read from the beginning of vars buffer where result typically ends up
-      encoder.copyBufferToBuffer(this.buffers.vars, 0, this.buffers.resultStaging, 0, 4);
+      const actualIdx = rootIdx % config.varsLen;
+      const byteOffset = actualIdx * 4;
+      encoder.copyBufferToBuffer(this.buffers.vars, byteOffset, this.buffers.resultStaging, 0, 4);
       this.queue.submit([encoder.finish()]);
     }
 

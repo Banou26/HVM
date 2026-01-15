@@ -366,23 +366,23 @@ fn node_exchange(loc: u32, fst: u32, snd: u32) -> vec2<u32> {
 }
 
 fn vars_load(var_idx: u32) -> u32 {
-  return atomicLoad(&vars_buf[var_idx]);
+  return atomicLoad(&vars_buf[var_idx % config.vars_len]);
 }
 
 fn vars_store(var_idx: u32, val: u32) {
-  atomicStore(&vars_buf[var_idx], val);
+  atomicStore(&vars_buf[var_idx % config.vars_len], val);
 }
 
 fn vars_create(var_idx: u32, val: u32) {
-  atomicStore(&vars_buf[var_idx], val);
+  atomicStore(&vars_buf[var_idx % config.vars_len], val);
 }
 
 fn vars_take(var_idx: u32) -> u32 {
-  return atomicExchange(&vars_buf[var_idx], 0u);
+  return atomicExchange(&vars_buf[var_idx % config.vars_len], 0u);
 }
 
 fn vars_exchange(var_idx: u32, val: u32) -> u32 {
-  return atomicExchange(&vars_buf[var_idx], val);
+  return atomicExchange(&vars_buf[var_idx % config.vars_len], val);
 }
 
 fn is_node_free(loc: u32) -> bool {
