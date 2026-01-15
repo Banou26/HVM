@@ -19,6 +19,9 @@ extern "C" {
   fn hvm_cu(book_buffer: *const u32);
 }
 
+#[cfg(feature = "wgpu")]
+use ::hvm::wgpu as hvm_wgpu;
+
 fn main() {
   let matches = Command::new("hvm")
     .about("HVM2: Higher-order Virtual Machine 2 (32-bit Version)")
@@ -57,6 +60,18 @@ fn main() {
     .subcommand(
       Command::new("gen-cu")
         .about("Compiles a file (to standalone CUDA)")
+        .arg(Arg::new("file").required(true))
+        .arg(Arg::new("io")
+          .long("io")
+          .action(ArgAction::SetTrue)
+          .help("Generate with IO enabled")))
+    .subcommand(
+      Command::new("run-wgpu")
+        .about("Interprets a file (using WebGPU)")
+        .arg(Arg::new("file").required(true)))
+    .subcommand(
+      Command::new("gen-wgpu")
+        .about("Compiles a file (to standalone WebGPU/JavaScript)")
         .arg(Arg::new("file").required(true))
         .arg(Arg::new("io")
           .long("io")
@@ -143,7 +158,7 @@ fn main() {
       //let hvm_c = include_str!("hvm.cu");
       //let hvm_c = hvm_c.replace("///COMPILED_INTERACT_CALL///", &cmp::compile_book(cmp::Target::CUDA, &book));
       //let hvm_c = hvm_c.replace("#define INTERPRETED", "#define COMPILED");
-      
+
       // Generates the Cuda file
       let hvm_cu = include_str!("hvm.cu");
       let hvm_cu = format!("#define IO\n\n{hvm_cu}");
@@ -152,6 +167,52 @@ fn main() {
       let hvm_cu = format!("{hvm_cu}\n\n{}", include_str!("run.cu"));
       let hvm_cu = hvm_cu.replace(r#"#include "hvm.cu""#, "");
       println!("{}", hvm_cu);
+    }
+    Some(("run-wgpu", sub_matches)) => {
+      let file = sub_matches.get_one::<String>("file").expect("required");
+      let code = fs::read_to_string(file).expect("Unable to read file");
+      let book = ast::Book::parse(&code).unwrap_or_else(|er| panic!("{}",er)).build();
+      #[cfg(feature = "wgpu")]
+      {
+        match hvm_wgpu::run_wgpu(&book) {
+          Ok(result) => {
+            // Try to readback result
+            if let Some(port) = result.result {
+              println!("Result: {:?}", port);
+            } else {
+              println!("Result: (readback pending)");
+            }
+            println!("- ITRS: {}", result.interactions);
+            println!("- TIME: {:.2}s", result.time_secs);
+            println!("- MIPS: {:.2}", result.interactions as f64 / result.time_secs / 1_000_000.0);
+          }
+          Err(e) => {
+            eprintln!("WebGPU error: {}", e);
+            std::process::exit(1);
+          }
+        }
+      }
+      #[cfg(not(feature = "wgpu"))]
+      println!("WebGPU runtime not available!\n To enable, install with: cargo install hvm --features wgpu");
+    }
+    Some(("gen-wgpu", sub_matches)) => {
+      // Reads book from file
+      let file = sub_matches.get_one::<String>("file").expect("required");
+      let code = fs::read_to_string(file).expect("Unable to read file");
+      let book = ast::Book::parse(&code).unwrap_or_else(|er| panic!("{}",er)).build();
+
+      // Generate the WebGPU/JavaScript code
+      #[cfg(feature = "wgpu")]
+      {
+        let output = hvm_wgpu::gen_wgpu(&book, sub_matches.get_flag("io"));
+        println!("{}", output);
+      }
+      #[cfg(not(feature = "wgpu"))]
+      {
+        // Even without wgpu feature, we can still generate the code
+        let output = cmp::compile_book(cmp::Target::WebGPU, &book);
+        println!("{}", output);
+      }
     }
     _ => unreachable!(),
   }

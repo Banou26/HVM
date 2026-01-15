@@ -5,3 +5,6 @@
 pub mod ast;
 pub mod cmp;
 pub mod hvm;
+
+#[cfg(feature = "wgpu")]
+pub mod wgpu;

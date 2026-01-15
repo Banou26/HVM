@@ -6,6 +6,8 @@ fn main() {
   println!("cargo:rerun-if-changed=src/hvm.c");
   println!("cargo:rerun-if-changed=src/run.cu");
   println!("cargo:rerun-if-changed=src/hvm.cu");
+  println!("cargo:rerun-if-changed=src/hvm.wgsl");
+  println!("cargo:rerun-if-changed=src/wgpu.rs");
   println!("cargo:rustc-link-arg=-rdynamic");
 
   match cc::Build::new()
@@ -42,6 +44,13 @@ fn main() {
     println!("cargo:rustc-cfg=feature=\"cuda\"");
   }
   else {
-    println!("cargo:warning=\x1b[1m\x1b[31mWARNING: CUDA compiler not found.\x1b[0m \x1b[1mHVM will not be able to run on GPU.\x1b[0m");
+    println!("cargo:warning=\x1b[1m\x1b[31mWARNING: CUDA compiler not found.\x1b[0m \x1b[1mHVM will not be able to run on GPU via CUDA.\x1b[0m");
+  }
+
+  // WebGPU support is enabled via the 'wgpu' feature flag
+  // No build-time detection needed - it's a pure Rust/WGSL implementation
+  #[cfg(feature = "wgpu")]
+  {
+    println!("cargo:warning=WebGPU support enabled. Use 'hvm run-wgpu' or 'hvm gen-wgpu' for WebGPU execution.");
   }
 }

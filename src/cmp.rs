@@ -4,10 +4,15 @@ use crate::hvm;
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Target { CUDA, C }
+pub enum Target { CUDA, C, WebGPU }
 
 // Compiles a whole Book.
 pub fn compile_book(trg: Target, book: &hvm::Book) -> String {
+  // WebGPU uses a different compilation strategy (interpreted from book buffer)
+  if trg == Target::WebGPU {
+    return compile_book_wgpu(book);
+  }
+
   let mut code = String::new();
 
   // Compiles functions
@@ -31,6 +36,47 @@ pub fn compile_book(trg: Target, book: &hvm::Book) -> String {
   code.push_str(&format!("}}"));
 
   return code;
+}
+
+// Compiles a Book for WebGPU target (generates JavaScript/WGSL code)
+pub fn compile_book_wgpu(book: &hvm::Book) -> String {
+  let mut output = String::new();
+
+  // Generate book data as JavaScript array
+  let mut book_data: Vec<u8> = Vec::new();
+  book.to_buffer(&mut book_data);
+
+  output.push_str("// HVM2 WebGPU Generated Code\n");
+  output.push_str("// This is a standalone WebGPU implementation\n\n");
+
+  // Include the WGSL shader
+  output.push_str("const HVM_SHADER = `\n");
+  output.push_str(include_str!("hvm.wgsl"));
+  output.push_str("`;\n\n");
+
+  // Book data as Uint8Array
+  output.push_str("const BOOK_DATA = new Uint8Array([");
+  for (i, byte) in book_data.iter().enumerate() {
+    if i > 0 {
+      output.push_str(",");
+    }
+    if i % 32 == 0 {
+      output.push_str("\n  ");
+    }
+    output.push_str(&format!("{}", byte));
+  }
+  output.push_str("\n]);\n\n");
+
+  // Include function definitions as comments for debugging
+  output.push_str("/*\n");
+  output.push_str("Book Definitions:\n");
+  for (fid, def) in book.defs.iter().enumerate() {
+    output.push_str(&format!("  {}: {} (safe={}, nodes={}, vars={})\n",
+      fid, def.name, def.safe, def.node.len(), def.vars));
+  }
+  output.push_str("*/\n\n");
+
+  output
 }
 
 // Compiles a single Def.
