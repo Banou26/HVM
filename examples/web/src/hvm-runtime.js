@@ -125,7 +125,7 @@ fn is_high_priority(rule: u32) -> bool { return ((0x1Du >> rule) & 1u) != 0u; }
 fn new_u24(val: u32) -> u32 { return (val << 5u) | TY_U24; }
 fn get_u24(word: u32) -> u32 { return word >> 5u; }
 fn new_i24(val: i32) -> u32 { return (u32(val) << 5u) | TY_I24; }
-fn get_i24(word: u32) -> i32 { return i32(word) << 3 >> 8; }
+fn get_i24(word: u32) -> i32 { return (i32(word) << 3) >> 8; }
 fn get_typ(word: u32) -> u32 { return word & 0x1Fu; }
 fn get_sym(word: u32) -> u32 { return word >> 5u; }
 fn new_sym(val: u32) -> u32 { return (val << 5u) | TY_SYM; }

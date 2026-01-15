@@ -217,7 +217,7 @@ fn new_i24(val: i32) -> u32 {
 }
 
 fn get_i24(word: u32) -> i32 {
-  return i32(word) << 3 >> 8;
+  return (i32(word) << 3) >> 8;
 }
 
 fn get_typ(word: u32) -> u32 {
