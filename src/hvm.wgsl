@@ -84,7 +84,7 @@ struct NetConfig {
 @group(0) @binding(2) var<storage, read_write> rbag_buf: array<u32>; // Redex bag (pairs)
 @group(0) @binding(3) var<storage, read_write> rbag_len: array<atomic<u32>>; // Per-thread redex counts
 @group(0) @binding(4) var<storage, read> book_buf: array<u32>; // Book of definitions
-@group(0) @binding(5) var<uniform> config: NetConfig;
+@group(0) @binding(5) var<storage, read_write> config: NetConfig;
 
 // Workgroup shared memory for local redex bag
 var<workgroup> local_hi: array<u32, 512>; // High priority redexes (pairs as 2 u32s)

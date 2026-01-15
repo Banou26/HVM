@@ -74,7 +74,7 @@ struct NetConfig {
 @group(0) @binding(2) var<storage, read_write> rbag_buf: array<u32>;
 @group(0) @binding(3) var<storage, read_write> rbag_len: array<atomic<u32>>;
 @group(0) @binding(4) var<storage, read> book_buf: array<u32>;
-@group(0) @binding(5) var<uniform> config: NetConfig;
+@group(0) @binding(5) var<storage, read_write> config: NetConfig;
 
 fn new_port(tag: u32, val: u32) -> u32 { return (val << 3u) | tag; }
 fn get_tag(port: u32) -> u32 { return port & 7u; }
@@ -591,7 +591,7 @@ export class HVMRuntime {
 
     this.buffers.config = this.device.createBuffer({
       size: configData.byteLength,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
       mappedAtCreation: true
     });
     new Uint32Array(this.buffers.config.getMappedRange()).set(configData);
@@ -620,7 +620,7 @@ export class HVMRuntime {
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }
+        { binding: 5, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }
       ]
     });
 

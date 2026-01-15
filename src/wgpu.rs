@@ -159,7 +159,7 @@ async fn run_wgpu_async(book: &Book, config: WgpuConfig) -> Result<WgpuResult, S
     let config_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Config Buffer"),
         contents: bytemuck::bytes_of(&net_config),
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
+        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
     });
 
     // Staging buffer for reading results
@@ -242,7 +242,7 @@ async fn run_wgpu_async(book: &Book, config: WgpuConfig) -> Result<WgpuResult, S
                 binding: 5,
                 visibility: wgpu::ShaderStages::COMPUTE,
                 ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
+                    ty: wgpu::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
