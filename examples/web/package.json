@@ -1,0 +1,22 @@
+{
+  "name": "hvm-webgpu-example",
+  "version": "1.0.0",
+  "description": "HVM WebGPU E2E example with Vitest browser mode",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:browser": "vitest --browser.enabled --browser.name=chromium --browser.provider=playwright",
+    "test:ui": "vitest --ui",
+    "generate": "cd ../.. && cargo build --features wgpu --release && ./target/release/hvm gen-wgpu examples/sum_tree/main.hvm > examples/web/src/generated/sum_tree.js"
+  },
+  "devDependencies": {
+    "@vitest/browser": "^2.0.0",
+    "@vitest/ui": "^2.0.0",
+    "playwright": "^1.45.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}

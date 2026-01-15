@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HVM WebGPU Example</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 {
+      color: #00d9ff;
+    }
+    .card {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid #0f3460;
+    }
+    .status {
+      padding: 10px 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .status.success {
+      background: #0a3d2a;
+      border: 1px solid #10b981;
+    }
+    .status.error {
+      background: #3d0a0a;
+      border: 1px solid #ef4444;
+    }
+    .status.pending {
+      background: #3d2a0a;
+      border: 1px solid #f59e0b;
+    }
+    button {
+      background: #00d9ff;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px;
+    }
+    button:hover {
+      background: #00b8d9;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    pre {
+      background: #0d1117;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 14px;
+    }
+    code {
+      color: #7ee787;
+    }
+    .result {
+      font-size: 24px;
+      color: #00d9ff;
+      font-weight: bold;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 20px;
+      color: #00d9ff;
+      font-weight: bold;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: #0d1117;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <h1>HVM WebGPU Example</h1>
+
+  <div class="card">
+    <h2>WebGPU Status</h2>
+    <div id="webgpu-status" class="status pending">Checking WebGPU support...</div>
+  </div>
+
+  <div class="card">
+    <h2>HVM Program</h2>
+    <p>Enter an HVM program or use the example:</p>
+    <textarea id="hvm-code">@gen = (?(((a a) @gen__C0) b) b)
+
+@gen__C0 = ({a d} ({$([*2] $([+1] b)) $([*2] e)} (c f)))
+  &! @gen ~ (a (b c))
+  &! @gen ~ (d (e f))
+
+@main = a
+  & @sum ~ (16 (@main__C0 a))
+
+@main__C0 = a
+  & @gen ~ (16 (0 a))
+
+@sum = (?(((* 1) @sum__C0) a) a)
+
+@sum__C0 = ({a c} ((b d) f))
+  &! @sum ~ (a (b $([+] $(e f))))
+  &! @sum ~ (c (d e))</textarea>
+    <p><small>This program generates a tree of depth 16 and sums all leaves (result: 65536)</small></p>
+  </div>
+
+  <div class="card">
+    <h2>Execution</h2>
+    <button id="run-btn" onclick="runHVM()">Run on WebGPU</button>
+    <button id="run-rust-btn" onclick="runHVMRust()">Run Reference (JS)</button>
+
+    <div id="result-container" style="display: none; margin-top: 20px;">
+      <h3>Result</h3>
+      <div class="result" id="result"></div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="stat-itrs">-</div>
+          <div class="stat-label">Interactions</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-time">-</div>
+          <div class="stat-label">Time (s)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="stat-mips">-</div>
+          <div class="stat-label">MIPS</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-container" style="display: none; margin-top: 20px;">
+      <div class="status error" id="error-message"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Console Output</h2>
+    <pre id="console-output"><code>Ready...</code></pre>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
